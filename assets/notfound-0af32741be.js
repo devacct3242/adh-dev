@@ -3,6 +3,7 @@
 //   /berlin, /köln, /Münih                        → the Turkish city page
 //   /en/munich, /en/munich-prayer-times/          → the English city page
 //   /sehirler, /en/cities                         → the city list
+//   /koln-ramazan, /en/cologne-ramadan-2027/      → the Ramadan page (/ramazan → the Ramadan list)
 (() => {
   const el = document.getElementById('nf-data');
   if (!el) return;
@@ -18,18 +19,20 @@
   const en = /^en(\/|$)/.test(rest);
   if (en) rest = rest.replace(/^en\/?/, '');
   if (rest.includes('/')) return;
-  const key = rest
+  const slug = rest
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
     .replace(/ı/g, 'i')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .replace(/-?(namaz-vakitleri|namaz-vakti|prayer-times|prayer-time)$/, '');
+    .replace(/^-|-$/g, '');
+  const ramadan = slug.match(/^(.*?)-?(?:ramazan|ramadan)(?:-imsakiyesi|-imsakiye|-timetable|-takvimi)?(?:-\d{4})?$/);
+  const key = (ramadan ? ramadan[1] : slug).replace(/-?(namaz-vakitleri|namaz-vakti|prayer-times|prayer-time)$/, '');
   const lang = en ? 1 : 0;
   let to = null;
   if (rest === '') to = en ? d.base : null; // /en alone: the app picks the language itself
+  else if (ramadan && key === '') to = d.ramadanIndex[lang];
   else if (key === '' || key === 'sehirler' || key === 'cities') to = d.index[lang];
-  else if (d.routes[key]) to = d.routes[key][lang];
+  else if (d.routes[key]) to = d.routes[key][ramadan ? lang + 2 : lang];
   if (to && to !== location.pathname) location.replace(to + location.search + location.hash);
 })();
